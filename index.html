@@ -1,118 +1,60 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>HTML TOOLS BY BIMXYZ</title>
   <style>
     body { background-color: #111; color: #eee; font-family: monospace; padding: 20px; }
-    textarea, input, button {
-      width: 100%; padding: 10px; margin-top: 10px; font-family: monospace;
-      background: #1e1e1e; color: #0f0; border: 1px solid #333; border-radius: 6px;
+    h2 { margin-top: 40px; }
+    textarea, input {
+      width: 100%; padding: 10px; margin-top: 10px;
+      font-family: monospace; background: #1e1e1e; color: #0f0;
+      border: 1px solid #333; border-radius: 6px; resize: vertical;
     }
-    textarea.readonly { background: #1a1a1a; color: #eee; resize: vertical; }
-    button { background: #333; color: #fff; cursor: pointer; font-weight: bold; }
+    textarea.readonly { background: #1a1a1a; color: #eee; }
+    button {
+      padding: 10px; margin-top: 10px; background: #333; color: #fff;
+      border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+    }
     button:hover { background: #555; }
     .output-container { position: relative; }
     .copy-btn {
-      position: absolute; top: 5px; right: 5px; font-size: 12px;
-      padding: 5px 10px; background: #444;
+      position: absolute; top: 5px; right: 5px;
+      font-size: 12px; padding: 5px 10px; background: #444;
     }
-    .limit-info {
-      margin-top: 15px;
-      font-size: 14px;
-      color: #f33;
-    }
-    .buy-link {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 6px 12px;
-      background: #444;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 6px;
-    }
+    #limitStatus { margin-top: 10px; color: #0f0; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>HTML TOOLS BY BIMXYZ</h1>
-
-  <div id="limitArea" class="limit-info"></div>
-
-  <h2>🔒 Encrypt HTML</h2>
+  <h1>HTML TOOLS BY BIMXYZ</h1>  <h2>🔑 Masukkan Token Akses (Opsional)</h2>
+  <input type="text" id="tokenInput" placeholder="Masukkan token di sini...">
+  <button onclick="verifyToken()">Verifikasi Token</button>
+  <div id="tokenStatus"></div>  <div id="limitStatus"></div>  <h2>🔒 Encrypt HTML</h2>
   <textarea id="encryptInput" placeholder="Masukkan HTML di sini..."></textarea>
   <button onclick="runWithLimit(encryptHTML)">Encrypt</button>
   <div class="output-container">
     <textarea id="encryptOutput" class="readonly" readonly></textarea>
     <button class="copy-btn" onclick="copy('encryptOutput')">Copy</button>
-  </div>
-
-  <hr>
-
-  <h2>🔓 Decrypt HTML</h2>
-  <textarea id="decryptInput" placeholder="Tempel hasil encrypt di sini..."></textarea>
+  </div>  <h2>🔓 Decrypt HTML</h2>
+  <textarea id="decryptInput" placeholder="Tempelkan hasil encrypt di sini..."></textarea>
   <button onclick="runWithLimit(decryptHTML)">Decrypt</button>
   <div class="output-container">
     <textarea id="decryptOutput" class="readonly" readonly></textarea>
     <button class="copy-btn" onclick="copy('decryptOutput')">Copy</button>
-  </div>
-
-  <hr>
-
-  <h2>🌐 Get HTML dari Website</h2>
+  </div>  <h2>🌐 Get HTML from Website</h2>
   <input type="text" id="urlInput" placeholder="Contoh: https://example.com">
   <button onclick="runWithLimit(fetchWebsiteHTML)">Ambil HTML</button>
   <div class="output-container">
     <textarea id="fetchOutput" class="readonly" readonly></textarea>
     <button class="copy-btn" onclick="copy('fetchOutput')">Copy</button>
-  </div>
-
-  <script>
-    const limitKey = 'bimxyz-usage';
+  </div>  <script>
+    const limitKey = 'bimxyz-limit';
     const maxLimit = 5;
-
-    function checkLimit() {
-      const today = new Date().toISOString().slice(0, 10);
-      let data = JSON.parse(localStorage.getItem(limitKey)) || {};
-      if (data.date !== today) {
-        data = { date: today, count: 0 };
-        localStorage.setItem(limitKey, JSON.stringify(data));
-      }
-      return data;
-    }
-
-    function updateLimit() {
-      const data = checkLimit();
-      data.count++;
-      localStorage.setItem(limitKey, JSON.stringify(data));
-    }
-
-    function showLimitStatus() {
-      const data = checkLimit();
-      const remaining = maxLimit - data.count;
-      document.getElementById('limitArea').innerHTML =
-        `Sisa penggunaan hari ini: ${remaining} / ${maxLimit}` +
-        (remaining <= 0
-          ? '<br><a class="buy-link" href="https://bimxyzdev.vercel.app" target="_blank">Beli akses unlimited</a>'
-          : '');
-    }
-
-    function runWithLimit(action) {
-      const data = checkLimit();
-      if (data.count >= maxLimit) {
-        alert('❌ Limit penggunaan hari ini sudah habis!');
-        showLimitStatus();
-        return;
-      }
-      action();
-      updateLimit();
-      showLimitStatus();
-    }
 
     function encryptHTML() {
       const raw = document.getElementById("encryptInput").value;
       const encoded = escape(raw);
-      const final = `<script>document.write(unescape("${encoded}"))<\/script>`;
+      const final = `<script>document.write(unescape(\"${encoded}\"))<\/script>`;
       document.getElementById("encryptOutput").value = final;
     }
 
@@ -121,11 +63,11 @@
       let output = "";
       try {
         output = atob(input);
-      } catch {
+      } catch (e1) {
         try {
           output = unescape(input);
-        } catch {
-          output = "❌ Format tidak dikenali.";
+        } catch (e2) {
+          output = "❌ Gagal didecrypt. Format tidak dikenali.";
         }
       }
       document.getElementById("decryptOutput").value = output;
@@ -145,13 +87,84 @@
     }
 
     function copy(id) {
-      const el = document.getElementById(id);
-      el.select();
+      const textArea = document.getElementById(id);
+      textArea.select();
       document.execCommand("copy");
     }
 
-    // Load limit info saat pertama dibuka
+    function isTokenStillValid() {
+      const tokenData = JSON.parse(localStorage.getItem("bimxyz-token"));
+      if (!tokenData) return false;
+      const today = new Date().toISOString().slice(0, 10);
+      return tokenData.expires >= today;
+    }
+
+    function checkLimit() {
+      if (isTokenStillValid()) return { unlimited: true };
+      const today = new Date().toISOString().slice(0, 10);
+      let data = JSON.parse(localStorage.getItem(limitKey)) || {};
+      if (data.date !== today) {
+        data = { date: today, count: 0 };
+        localStorage.setItem(limitKey, JSON.stringify(data));
+      }
+      return data;
+    }
+
+    function updateLimit() {
+      const today = new Date().toISOString().slice(0, 10);
+      let data = JSON.parse(localStorage.getItem(limitKey)) || { date: today, count: 0 };
+      data.count += 1;
+      localStorage.setItem(limitKey, JSON.stringify(data));
+    }
+
+    function showLimitStatus() {
+      const data = checkLimit();
+      if (data.unlimited) {
+        document.getElementById("limitStatus").innerText = "🔓 Unlimited Access Aktif";
+      } else {
+        document.getElementById("limitStatus").innerText = `🔐 Limit penggunaan: ${data.count}/${maxLimit} hari ini.`;
+      }
+    }
+
+    function runWithLimit(action) {
+      const data = checkLimit();
+      if (data.unlimited) {
+        action(); showLimitStatus(); return;
+      }
+      if (data.count >= maxLimit) {
+        alert('❌ Limit penggunaan hari ini sudah habis!');
+        showLimitStatus(); return;
+      }
+      action();
+      updateLimit();
+      showLimitStatus();
+    }
+
+    async function verifyToken() {
+      const inputToken = document.getElementById('tokenInput').value.trim();
+      const status = document.getElementById('tokenStatus');
+      if (!inputToken) return status.innerText = "❌ Token tidak boleh kosong.";
+      try {
+        const res = await fetch('https://raw.githubusercontent.com/BimxyzDev/Blauhxxyubb/main/Token/Token.json');
+        const tokens = await res.json();
+        if (tokens[inputToken]) {
+          const token = tokens[inputToken];
+          const today = new Date().toISOString().slice(0, 10);
+          if (token.expires >= today && token.used < token.max) {
+            localStorage.setItem("bimxyz-token", JSON.stringify({ token: inputToken, expires: token.expires }));
+            status.innerText = "✅ Token valid! Akses unlimited aktif hingga " + token.expires;
+            showLimitStatus(); return;
+          } else {
+            status.innerText = "❌ Token kadaluarsa atau sudah habis.";
+          }
+        } else {
+          status.innerText = "❌ Token tidak ditemukan.";
+        }
+      } catch (err) {
+        status.innerText = "❌ Gagal verifikasi token: " + err.message;
+      }
+    }
+
     showLimitStatus();
-  </script>
-</body>
+  </script></body>
 </html>
