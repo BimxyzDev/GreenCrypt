@@ -10,9 +10,7 @@
       font-family: monospace;
       padding: 20px;
     }
-    h2 {
-      margin-top: 40px;
-    }
+    h2 { margin-top: 40px; }
     textarea, input {
       width: 100%;
       padding: 10px;
@@ -38,9 +36,7 @@
       cursor: pointer;
       font-weight: bold;
     }
-    button:hover {
-      background: #555;
-    }
+    button:hover { background: #555; }
     .output-container {
       position: relative;
     }
@@ -52,101 +48,83 @@
       padding: 5px 10px;
       background: #444;
     }
-    .limit-info {
-      margin: 10px 0;
-      color: #f00;
+    .token-box {
+      margin-top: 30px;
+      border-top: 1px solid #333;
+      padding-top: 20px;
     }
-    .buy-link {
-      display: inline-block;
-      margin-top: 10px;
-      background: #0f0;
-      color: #000;
-      padding: 8px 12px;
-      border-radius: 5px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    hr {
-      margin: 40px 0;
-      border-color: #333;
-    }
+    hr { margin: 40px 0; border-color: #333; }
+    a { color: #0af; text-decoration: none; }
   </style>
+  <script src="token.js"></script>
 </head>
 <body>
-  <h1>HTML TOOLS BY BIMXYZ</h1>  <div id="limitBox" class="limit-info"></div>  <!-- ENCRYPT -->  <h2>🔒 Encrypt HTML</h2>
+  <h1>HTML TOOLS BY BIMXYZ</h1>  <h2>🔒 Encrypt HTML</h2>
   <textarea id="encryptInput" placeholder="Masukkan HTML di sini..."></textarea>
-  <button onclick="handleAction('encrypt')">Encrypt</button>
+  <button onclick="encryptHTML()">Encrypt</button>
   <div class="output-container">
     <textarea id="encryptOutput" class="readonly" readonly></textarea>
     <button class="copy-btn" onclick="copy('encryptOutput')">Copy</button>
-  </div>  <hr>  <!-- DECRYPT -->  <h2>🔓 Decrypt HTML</h2>
+  </div>  <hr>  <h2>🔓 Decrypt HTML</h2>
   <textarea id="decryptInput" placeholder="Tempelkan hasil encrypt di sini..."></textarea>
-  <button onclick="handleAction('decrypt')">Decrypt</button>
+  <button onclick="decryptHTML()">Decrypt</button>
   <div class="output-container">
     <textarea id="decryptOutput" class="readonly" readonly></textarea>
     <button class="copy-btn" onclick="copy('decryptOutput')">Copy</button>
-  </div>  <hr>  <!-- FETCH -->  <h2>🌐 Get HTML from Website</h2>
+  </div>  <hr>  <h2>🌐 Get HTML from Website</h2>
   <input type="text" id="urlInput" placeholder="Contoh: https://example.com">
-  <button onclick="handleAction('fetch')">Ambil HTML</button>
+  <button onclick="fetchWebsiteHTML()">Ambil HTML</button>
   <div class="output-container">
     <textarea id="fetchOutput" class="readonly" readonly></textarea>
     <button class="copy-btn" onclick="copy('fetchOutput')">Copy</button>
-  </div>  <div id="buyBox" style="display: none">
-    <p>Ingin akses <b>unlimited</b>? Beli token premium:</p>
-    <a href="https://bimxyzdev.vercel.app" target="_blank" class="buy-link">🔗 Hubungi Developer</a>
+  </div>  <div class="token-box">
+    <h2>🔑 Masukkan Token Premium</h2>
+    <input type="text" id="tokenInput" placeholder="Masukkan token di sini">
+    <button onclick="verifikasiToken()">Verifikasi Token</button>
+    <p id="tokenStatus"></p>
+    <p>Belum punya token? <a href="https://bimxyzdev.vercel.app" target="_blank">Hubungi Developer</a></p>
   </div>  <script>
-    const LIMIT_PER_DAY = 5;
+    function isTokenValid() {
+      const token = localStorage.getItem("premium_token");
+      if (!token || !window.tokens) return false;
+      const data = window.tokens.find(t => t.token === token);
+      if (!data) return false;
+      const now = new Date();
+      const exp = new Date(data.expired);
+      return now <= exp;
+    }
 
-    const tokenData = window.localStorage.getItem('bim_token');
-    const isPremium = tokenData && new Date(tokenData) > new Date();
-
-    function getLimitData() {
-      const today = new Date().toISOString().slice(0, 10);
-      const data = JSON.parse(localStorage.getItem('bim_limit') || '{}');
-      if (data.date !== today) {
-        return { date: today, count: 0 };
+    function verifikasiToken() {
+      const tokenInput = document.getElementById("tokenInput").value.trim();
+      const status = document.getElementById("tokenStatus");
+      const data = window.tokens.find(t => t.token === tokenInput);
+      if (!data) return status.innerText = "❌ Token tidak valid.";
+      const now = new Date();
+      const exp = new Date(data.expired);
+      if (now > exp) {
+        status.innerText = "❌ Token sudah expired.";
+      } else {
+        localStorage.setItem("premium_token", tokenInput);
+        status.innerText = "✅ Token valid! Premium aktif.";
+        alert("Token aktif! Reload halaman untuk menghilangkan limit.");
       }
-      return data;
     }
 
-    function updateLimitData(count) {
-      const today = new Date().toISOString().slice(0, 10);
-      localStorage.setItem('bim_limit', JSON.stringify({ date: today, count }));
-    }
+    const isPremium = isTokenValid();
 
-    function renderLimitInfo() {
-      const data = getLimitData();
-      const limitBox = document.getElementById('limitBox');
-      if (isPremium) {
-        limitBox.innerHTML = '✅ <b>Akun Premium</b> - Tidak ada limit.';
-        return;
-      }
-      const sisa = LIMIT_PER_DAY - data.count;
-      limitBox.innerHTML = `🔁 Sisa limit hari ini: <b>${sisa}/${LIMIT_PER_DAY}</b>`;
-      if (sisa <= 0) document.getElementById('buyBox').style.display = 'block';
-    }
-
-    function canUse() {
+    function cekLimit() {
       if (isPremium) return true;
-      const data = getLimitData();
-      if (data.count >= LIMIT_PER_DAY) return false;
-      data.count++;
-      updateLimitData(data.count);
+      const hariIni = new Date().toISOString().split('T')[0];
+      const data = JSON.parse(localStorage.getItem("limit_data") || "{}");
+      if (!data[hariIni]) data[hariIni] = 0;
+      if (data[hariIni] >= 5) return false;
+      data[hariIni]++;
+      localStorage.setItem("limit_data", JSON.stringify(data));
       return true;
     }
 
-    function handleAction(action) {
-      if (!canUse()) {
-        alert("❌ Limit harian kamu habis. Silakan kembali besok atau beli akses unlimited.");
-        return;
-      }
-      if (action === 'encrypt') encryptHTML();
-      if (action === 'decrypt') decryptHTML();
-      if (action === 'fetch') fetchWebsiteHTML();
-      renderLimitInfo();
-    }
-
     function encryptHTML() {
+      if (!cekLimit()) return alert("❌ Limit harian habis. Gunakan token premium untuk akses unlimited.");
       const raw = document.getElementById("encryptInput").value;
       const encoded = escape(raw);
       const final = `<script>document.write(unescape(\"${encoded}\"))<\/script>`;
@@ -154,6 +132,7 @@
     }
 
     function decryptHTML() {
+      if (!cekLimit()) return alert("❌ Limit harian habis. Gunakan token premium untuk akses unlimited.");
       const input = document.getElementById("decryptInput").value.trim();
       let output = "";
       try {
@@ -169,6 +148,7 @@
     }
 
     async function fetchWebsiteHTML() {
+      if (!cekLimit()) return alert("❌ Limit harian habis. Gunakan token premium untuk akses unlimited.");
       const url = document.getElementById("urlInput").value.trim();
       const output = document.getElementById("fetchOutput");
       output.value = "🔄 Memuat...";
@@ -186,7 +166,5 @@
       textArea.select();
       document.execCommand("copy");
     }
-
-    renderLimitInfo();
   </script></body>
   </html>
