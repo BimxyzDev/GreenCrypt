@@ -1,101 +1,122 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTML Tools with Token Limit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HTML TOOLS BY BIMXYZ</title>
   <style>
-    body {
-      background-color: #111;
-      color: #eee;
-      font-family: monospace;
-      padding: 20px;
-    }
+    body { background-color: #111; color: #eee; font-family: monospace; padding: 20px; }
     textarea, input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      background-color: #1e1e1e;
-      border: 1px solid #333;
-      color: #0f0;
-      border-radius: 5px;
-      font-family: monospace;
+      width: 100%; padding: 10px; margin-top: 10px; font-family: monospace;
+      background: #1e1e1e; color: #0f0; border: 1px solid #333; border-radius: 6px;
     }
-    .readonly {
-      background-color: #1a1a1a;
-      color: #eee;
-    }
+    textarea.readonly { background: #1a1a1a; color: #eee; resize: vertical; }
+    button { background: #333; color: #fff; cursor: pointer; font-weight: bold; }
+    button:hover { background: #555; }
+    .output-container { position: relative; }
     .copy-btn {
-      margin-top: 5px;
-      background: #333;
-      color: #fff;
-      cursor: pointer;
+      position: absolute; top: 5px; right: 5px; font-size: 12px;
+      padding: 5px 10px; background: #444;
     }
-    .copy-btn:hover { background: #555; }
     .limit-info {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #f33;
+    }
+    .buy-link {
+      display: inline-block;
       margin-top: 10px;
-      color: #ff0;
+      padding: 6px 12px;
+      background: #444;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
-  <h1>HTML TOOLS BY BIMXYZ</h1>  <div class="limit-info" id="limitStatus">Memuat token...</div>
-  <input type="text" id="tokenInput" placeholder="Masukkan token akses">
-  <button onclick="validateToken()">🔓 Verifikasi Token</button>  <div id="toolContent" style="display:none">
-    <h2>🔒 Encrypt HTML</h2>
-    <textarea id="encryptInput" placeholder="Masukkan HTML di sini..."></textarea>
-    <button onclick="encryptHTML()">Encrypt</button>
-    <textarea id="encryptOutput" class="readonly" placeholder="Hasil encrypt muncul di sini..." readonly></textarea>
-    <button class="copy-btn" onclick="copy('encryptOutput')">Copy</button><h2>🔓 Decrypt HTML</h2>
-<textarea id="decryptInput" placeholder="Masukkan hasil encrypt di sini..."></textarea>
-<button onclick="decryptHTML()">Decrypt</button>
-<textarea id="decryptOutput" class="readonly" placeholder="Hasil decrypt muncul di sini..." readonly></textarea>
-<button class="copy-btn" onclick="copy('decryptOutput')">Copy</button>
+  <h1>HTML TOOLS BY BIMXYZ</h1>
 
-<h2>🌐 Ambil HTML Website</h2>
-<input type="text" id="urlInput" placeholder="Contoh: https://example.com">
-<button onclick="fetchWebsiteHTML()">Ambil HTML</button>
-<textarea id="fetchOutput" class="readonly" placeholder="HTML dari URL akan tampil di sini..." readonly></textarea>
-<button class="copy-btn" onclick="copy('fetchOutput')">Copy</button>
+  <div id="limitArea" class="limit-info"></div>
 
-  </div>  <script>
-    const tokenUrl = "https://raw.githubusercontent.com/BimxyzDev/Blauhxxyubb/main/Token/Token.json";
-    let currentToken = null;
-    let tokenData = {};
+  <h2>🔒 Encrypt HTML</h2>
+  <textarea id="encryptInput" placeholder="Masukkan HTML di sini..."></textarea>
+  <button onclick="runWithLimit(encryptHTML)">Encrypt</button>
+  <div class="output-container">
+    <textarea id="encryptOutput" class="readonly" readonly></textarea>
+    <button class="copy-btn" onclick="copy('encryptOutput')">Copy</button>
+  </div>
 
-    async function validateToken() {
-      const inputToken = document.getElementById('tokenInput').value.trim();
-      document.getElementById('limitStatus').innerText = '⏳ Memverifikasi token...';
+  <hr>
 
-      try {
-        const res = await fetch(tokenUrl);
-        const data = await res.json();
-        tokenData = data[inputToken];
+  <h2>🔓 Decrypt HTML</h2>
+  <textarea id="decryptInput" placeholder="Tempel hasil encrypt di sini..."></textarea>
+  <button onclick="runWithLimit(decryptHTML)">Decrypt</button>
+  <div class="output-container">
+    <textarea id="decryptOutput" class="readonly" readonly></textarea>
+    <button class="copy-btn" onclick="copy('decryptOutput')">Copy</button>
+  </div>
 
-        if (!tokenData) throw new Error("Token tidak ditemukan!");
+  <hr>
 
-        const today = new Date().toISOString().slice(0, 10);
-        if (tokenData.expires < today) throw new Error("Token sudah expired!");
-        if (tokenData.used >= tokenData.max) throw new Error("Limit harian habis!");
+  <h2>🌐 Get HTML dari Website</h2>
+  <input type="text" id="urlInput" placeholder="Contoh: https://example.com">
+  <button onclick="runWithLimit(fetchWebsiteHTML)">Ambil HTML</button>
+  <div class="output-container">
+    <textarea id="fetchOutput" class="readonly" readonly></textarea>
+    <button class="copy-btn" onclick="copy('fetchOutput')">Copy</button>
+  </div>
 
-        currentToken = inputToken;
-        document.getElementById('toolContent').style.display = 'block';
-        document.getElementById('limitStatus').innerText = `✅ Token valid | Digunakan: ${tokenData.used}/${tokenData.max}`;
-      } catch (e) {
-        document.getElementById('limitStatus').innerText = '❌ ' + e.message + ' | Beli token di: https://bimxyzdev.vercel.app';
-        document.getElementById('toolContent').style.display = 'none';
+  <script>
+    const limitKey = 'bimxyz-usage';
+    const maxLimit = 5;
+
+    function checkLimit() {
+      const today = new Date().toISOString().slice(0, 10);
+      let data = JSON.parse(localStorage.getItem(limitKey)) || {};
+      if (data.date !== today) {
+        data = { date: today, count: 0 };
+        localStorage.setItem(limitKey, JSON.stringify(data));
       }
+      return data;
+    }
+
+    function updateLimit() {
+      const data = checkLimit();
+      data.count++;
+      localStorage.setItem(limitKey, JSON.stringify(data));
+    }
+
+    function showLimitStatus() {
+      const data = checkLimit();
+      const remaining = maxLimit - data.count;
+      document.getElementById('limitArea').innerHTML =
+        `Sisa penggunaan hari ini: ${remaining} / ${maxLimit}` +
+        (remaining <= 0
+          ? '<br><a class="buy-link" href="https://bimxyzdev.vercel.app" target="_blank">Beli akses unlimited</a>'
+          : '');
+    }
+
+    function runWithLimit(action) {
+      const data = checkLimit();
+      if (data.count >= maxLimit) {
+        alert('❌ Limit penggunaan hari ini sudah habis!');
+        showLimitStatus();
+        return;
+      }
+      action();
+      updateLimit();
+      showLimitStatus();
     }
 
     function encryptHTML() {
-      if (!checkLimit()) return;
       const raw = document.getElementById("encryptInput").value;
       const encoded = escape(raw);
-      const final = `<script>document.write(unescape(\"${encoded}\"))<\/script>`;
+      const final = `<script>document.write(unescape("${encoded}"))<\/script>`;
       document.getElementById("encryptOutput").value = final;
     }
 
     function decryptHTML() {
-      if (!checkLimit()) return;
       const input = document.getElementById("decryptInput").value.trim();
       let output = "";
       try {
@@ -104,17 +125,16 @@
         try {
           output = unescape(input);
         } catch {
-          output = "❌ Gagal didecrypt. Format tidak dikenali.";
+          output = "❌ Format tidak dikenali.";
         }
       }
       document.getElementById("decryptOutput").value = output;
     }
 
     async function fetchWebsiteHTML() {
-      if (!checkLimit()) return;
       const url = document.getElementById("urlInput").value.trim();
       const output = document.getElementById("fetchOutput");
-      output.value = "⏳ Mengambil...";
+      output.value = "🔄 Memuat...";
       try {
         const res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
         const html = await res.text();
@@ -130,19 +150,8 @@
       document.execCommand("copy");
     }
 
-    function checkLimit() {
-      if (!currentToken || !tokenData) {
-        alert("❌ Token tidak valid atau belum diverifikasi.");
-        return false;
-      }
-      tokenData.used++;
-      if (tokenData.used > tokenData.max) {
-        alert("❌ Limit harian Anda sudah habis!");
-        document.getElementById('limitStatus').innerText = `❌ Limit habis | Beli token di: https://bimxyzdev.vercel.app`;
-        return false;
-      }
-      document.getElementById('limitStatus').innerText = `✅ Token valid | Digunakan: ${tokenData.used}/${tokenData.max}`;
-      return true;
-    }
-  </script></body>
+    // Load limit info saat pertama dibuka
+    showLimitStatus();
+  </script>
+</body>
 </html>
