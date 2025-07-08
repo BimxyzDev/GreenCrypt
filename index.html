@@ -1,170 +1,171 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>HTML TOOLS BY BIMXYZ</title>
+  <title>Tools by Bimxyz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { background-color: #111; color: #eee; font-family: monospace; padding: 20px; }
-    h2 { margin-top: 40px; }
-    textarea, input {
-      width: 100%; padding: 10px; margin-top: 10px;
-      font-family: monospace; background: #1e1e1e; color: #0f0;
-      border: 1px solid #333; border-radius: 6px; resize: vertical;
+    :root {
+      --bg: #111;
+      --fg: #eee;
+      --accent: #0f0;
+      --border: #333;
+      --link: #0af;
     }
-    textarea.readonly { background: #1a1a1a; color: #eee; }
-    button {
-      padding: 10px; margin-top: 10px; background: #333; color: #fff;
-      border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+    * { box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: monospace;
+      margin: 0;
+      padding: 20px;
     }
+    h1, h2 { text-align: center; }
+
+    /* Inputs & buttons */
+    input, textarea, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-family: monospace;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    input, textarea { background: #1e1e1e; color: var(--accent); }
+    textarea { resize: vertical; height: 200px; white-space: pre-wrap; }
+    button { background: #333; color: var(--fg); cursor: pointer; }
     button:hover { background: #555; }
+
+    /* Layout helpers */
+    .hidden { display: none; }
+    .menu button { width: 100%; font-weight: bold; margin-bottom: 10px; }
     .output-container { position: relative; }
-    .copy-btn {
-      position: absolute; top: 5px; right: 5px;
-      font-size: 12px; padding: 5px 10px; background: #444;
-    }
-    #limitStatus { margin-top: 10px; color: #0f0; font-weight: bold; }
+    .copy-btn { position: absolute; top: 5px; right: 5px; padding: 5px 10px; font-size: 12px; background: #333; border: none; color: #fff; }
+    .copy-btn:hover { background: #555; }
+    .status { text-align: center; font-size: 14px; margin-top: 50px; }
+    .token-section { margin-top: 40px; padding-top: 20px; border-top: 1px dashed #444; text-align: center; }
+    .premium-link { margin-top: 30px; text-align: center; }
+    .premium-link a { color: var(--link); font-weight: bold; text-decoration: underline; }
+    .premium-link a:hover { color: #5cf; }
+
+    /* Popup */
+    .popup { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: flex; justify-content: center; align-items: center; z-index: 99; }
+    .popup-content { background: #1e1e1e; padding: 20px; border: 2px solid red; border-radius: 10px; max-width: 500px; text-align: center; }
+    .popup-content h3 { color: red; }
+    .popup-content a { color: var(--link); text-decoration: none; display: inline-block; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>HTML TOOLS BY BIMXYZ</h1>  <h2>🔑 Masukkan Token Akses (Opsional)</h2>
-  <input type="text" id="tokenInput" placeholder="Masukkan token di sini...">
-  <button onclick="verifyToken()">Verifikasi Token</button>
-  <div id="tokenStatus"></div>  <div id="limitStatus"></div>  <h2>🔒 Encrypt HTML</h2>
-  <textarea id="encryptInput" placeholder="Masukkan HTML di sini..."></textarea>
-  <button onclick="runWithLimit(encryptHTML)">Encrypt</button>
+
+<!-- Popup Hukum -->
+<div class="popup" id="popup">
+  <div class="popup-content">
+    <h3>⚠️ PERINGATAN HUKUM</h3>
+    <p>Website ini dilindungi UU Hak Cipta & ITE.<br>Dilarang menduplikasi script tanpa izin.</p>
+    <button onclick="closePopup()">Saya Mengerti</button><br>
+    <a href="https://bimxyzdev.vercel.app" target="_blank">Hubungi Developer</a>
+  </div>
+</div>
+
+<h1>🔧 TOOLS BY BIMXYZ</h1>
+<p class="status"><b>Status Limit:</b> <span id="limitStatus">Loading…</span></p>
+<hr>
+
+<!-- Beranda -->
+<div id="home">
+  <h2>Pilih Fitur</h2>
+  <div class="menu">
+    <button onclick="showSection('html')">🔒 Encrypt/Decrypt HTML</button>
+    <button onclick="showSection('js')">🛡️ Encrypt/Decrypt JavaScript</button>
+  </div>
+  <div class="premium-link">
+    Ingin limit tanpa batas &amp; fitur eksklusif? <a href="https://bimxyzdev.vercel.app" target="_blank">Beli akses&nbsp;premium</a>.
+  </div>
+</div>
+
+<!-- HTML Section -->
+<div id="htmlSection" class="hidden">
+  <button onclick="showSection('home')">← Beranda</button>
+  <h2>🔒 Encrypt HTML</h2>
+  <textarea id="encHtmlIn" placeholder="Masukkan HTML…"></textarea>
+  <button onclick="encryptHTML()">Encrypt</button>
   <div class="output-container">
-    <textarea id="encryptOutput" class="readonly" readonly></textarea>
-    <button class="copy-btn" onclick="copy('encryptOutput')">Copy</button>
-  </div>  <h2>🔓 Decrypt HTML</h2>
-  <textarea id="decryptInput" placeholder="Tempelkan hasil encrypt di sini..."></textarea>
-  <button onclick="runWithLimit(decryptHTML)">Decrypt</button>
+    <textarea id="encHtmlOut" readonly></textarea>
+    <button class="copy-btn" onclick="copyText('encHtmlOut')">Copy</button>
+  </div>
+
+  <h2>🔓 Decrypt HTML</h2>
+  <textarea id="decHtmlIn" placeholder="Tempel hasil encrypt…"></textarea>
+  <button onclick="decryptHTML()">Decrypt</button>
   <div class="output-container">
-    <textarea id="decryptOutput" class="readonly" readonly></textarea>
-    <button class="copy-btn" onclick="copy('decryptOutput')">Copy</button>
-  </div>  <h2>🌐 Get HTML from Website</h2>
-  <input type="text" id="urlInput" placeholder="Contoh: https://example.com">
-  <button onclick="runWithLimit(fetchWebsiteHTML)">Ambil HTML</button>
+    <textarea id="decHtmlOut" readonly></textarea>
+    <button class="copy-btn" onclick="copyText('decHtmlOut')">Copy</button>
+  </div>
+
+  <h2>🌐 Ambil HTML Website</h2>
+  <input id="urlIn" placeholder="https://example.com">
+  <button onclick="fetchWebsiteHTML()">Ambil HTML</button>
   <div class="output-container">
-    <textarea id="fetchOutput" class="readonly" readonly></textarea>
-    <button class="copy-btn" onclick="copy('fetchOutput')">Copy</button>
-  </div>  <script>
-    const limitKey = 'bimxyz-limit';
-    const maxLimit = 5;
+    <textarea id="urlOut" readonly></textarea>
+    <button class="copy-btn" onclick="copyText('urlOut')">Copy</button>
+  </div>
+</div>
 
-    function encryptHTML() {
-      const raw = document.getElementById("encryptInput").value;
-      const encoded = escape(raw);
-      const final = `<script>document.write(unescape(\"${encoded}\"))<\/script>`;
-      document.getElementById("encryptOutput").value = final;
-    }
+<!-- JS Section -->
+<div id="jsSection" class="hidden">
+  <button onclick="showSection('home')">← Beranda</button>
+  <h2>🔒 Encrypt JavaScript</h2>
+  <textarea id="encJsIn" placeholder="Masukkan kode JS…"></textarea>
+  <button onclick="encryptJS()">Encrypt</button>
+  <div class="output-container">
+    <textarea id="encJsOut" readonly></textarea>
+    <button class="copy-btn" onclick="copyText('encJsOut')">Copy</button>
+  </div>
 
-    function decryptHTML() {
-      const input = document.getElementById("decryptInput").value.trim();
-      let output = "";
-      try {
-        output = atob(input);
-      } catch (e1) {
-        try {
-          output = unescape(input);
-        } catch (e2) {
-          output = "❌ Gagal didecrypt. Format tidak dikenali.";
-        }
-      }
-      document.getElementById("decryptOutput").value = output;
-    }
+  <h2>🔓 Decrypt JavaScript</h2>
+  <textarea id="decJsIn" placeholder="Masukkan JS terenkripsi…"></textarea>
+  <button onclick="decryptJS()">Decrypt</button>
+  <div class="output-container">
+    <textarea id="decJsOut" readonly></textarea>
+    <button class="copy-btn" onclick="copyText('decJsOut')">Copy</button>
+  </div>
+</div>
 
-    async function fetchWebsiteHTML() {
-      const url = document.getElementById("urlInput").value.trim();
-      const output = document.getElementById("fetchOutput");
-      output.value = "🔄 Memuat...";
-      try {
-        const res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
-        const html = await res.text();
-        output.value = html;
-      } catch (err) {
-        output.value = "❌ Gagal mengambil HTML: " + err.message;
-      }
-    }
+<!-- Token Input Bottom -->
+<div class="token-section">
+  <h3>🔑 Masukkan Token Premium</h3>
+  <input id="tokenInput" placeholder="Masukkan Token Premium (Opsional)">
+  <p class="status">Masukkan token untuk menghilangkan limit harian 5×.</p>
+</div>
 
-    function copy(id) {
-      const textArea = document.getElementById(id);
-      textArea.select();
-      document.execCommand("copy");
-    }
+<script>
+/***** CONFIG *****/
+const MAX_LIMIT = 5;
+let   isPremium = false;
 
-    function isTokenStillValid() {
-      const tokenData = JSON.parse(localStorage.getItem("bimxyz-token"));
-      if (!tokenData) return false;
-      const today = new Date().toISOString().slice(0, 10);
-      return tokenData.expires >= today;
-    }
+/***** HELPERS *****/
+const $ = sel => document.querySelector(sel);
+const todayKey = () => new Date().toISOString().split('T')[0];
 
-    function checkLimit() {
-      if (isTokenStillValid()) return { unlimited: true };
-      const today = new Date().toISOString().slice(0, 10);
-      let data = JSON.parse(localStorage.getItem(limitKey)) || {};
-      if (data.date !== today) {
-        data = { date: today, count: 0 };
-        localStorage.setItem(limitKey, JSON.stringify(data));
-      }
-      return data;
-    }
+/***** POPUP *****/
+function closePopup(){ $('#popup').style.display='none'; localStorage.setItem('popupShown','1'); }
+if(!localStorage.getItem('popupShown')) $('#popup').style.display='flex';
 
-    function updateLimit() {
-      const today = new Date().toISOString().slice(0, 10);
-      let data = JSON.parse(localStorage.getItem(limitKey)) || { date: today, count: 0 };
-      data.count += 1;
-      localStorage.setItem(limitKey, JSON.stringify(data));
-    }
+/***** LIMIT LOGIC *****/
+function getUsed(){ const d=JSON.parse(localStorage.getItem('limitData')||'{}'); return d[todayKey()]||0; }
+function setUsed(v){ const d=JSON.parse(localStorage.getItem('limitData')||'{}'); d[todayKey()]=v; localStorage.setItem('limitData',JSON.stringify(d)); }
+function incUsed(){ if(isPremium) return; setUsed(getUsed()+1); updateStatus(); }
+function canUse(){ if(isPremium) return true; if(getUsed()>=MAX_LIMIT){ alert('❌ Limit harian tercapai.'); return false; } return true; }
+function updateStatus(){ $('#limitStatus').textContent = isPremium ? 'Premium: Unlimited' : `Sisa Limit: ${Math.max(0, MAX_LIMIT-getUsed())}/${MAX_LIMIT}`; }
 
-    function showLimitStatus() {
-      const data = checkLimit();
-      if (data.unlimited) {
-        document.getElementById("limitStatus").innerText = "🔓 Unlimited Access Aktif";
-      } else {
-        document.getElementById("limitStatus").innerText = `🔐 Limit penggunaan: ${data.count}/${maxLimit} hari ini.`;
-      }
-    }
+/***** TOKEN *****/
+async function verifyToken(){ const token=$('#tokenInput').value.trim(); if(!token){ isPremium=false; localStorage.removeItem('premiumToken'); updateStatus(); return; }
+  try{ const res=await fetch('https://raw.githubusercontent.com/BimxyzDev/Blauhxxyubb/main/Token/Token.json'); const list=await res.json(); if(list[token] && todayKey() <= list[token].expires){ isPremium=true; localStorage.setItem('premiumToken',token); $('#limitStatus').textContent=`Premium aktif hingga ${list[token].expires}`; } else { isPremium=false; localStorage.removeItem('premiumToken'); $('#limitStatus').textContent='Token tidak valid/expired'; } }catch{ $('#limitStatus').textContent='Gagal verifikasi token'; } }
+$('#tokenInput').addEventListener('change', verifyToken);
 
-    function runWithLimit(action) {
-      const data = checkLimit();
-      if (data.unlimited) {
-        action(); showLimitStatus(); return;
-      }
-      if (data.count >= maxLimit) {
-        alert('❌ Limit penggunaan hari ini sudah habis!');
-        showLimitStatus(); return;
-      }
-      action();
-      updateLimit();
-      showLimitStatus();
-    }
-
-    async function verifyToken() {
-      const inputToken = document.getElementById('tokenInput').value.trim();
-      const status = document.getElementById('tokenStatus');
-      if (!inputToken) return status.innerText = "❌ Token tidak boleh kosong.";
-      try {
-        const res = await fetch('https://raw.githubusercontent.com/BimxyzDev/Blauhxxyubb/main/Token/Token.json');
-        const tokens = await res.json();
-        if (tokens[inputToken]) {
-          const token = tokens[inputToken];
-          const today = new Date().toISOString().slice(0, 10);
-          if (token.expires >= today && token.used < token.max) {
-            localStorage.setItem("bimxyz-token", JSON.stringify({ token: inputToken, expires: token.expires }));
-            status.innerText = "✅ Token valid! Akses unlimited aktif hingga " + token.expires;
-            showLimitStatus(); return;
-          } else {
-            status.innerText = "❌ Token kadaluarsa atau sudah habis.";
-          }
-        } else {
-          status.innerText = "❌ Token tidak ditemukan.";
-        }
-      } catch (err) {
-        status.innerText = "❌ Gagal verifikasi token: " + err.message;
-      }
-    }
-
-    showLimitStatus();
-  </script></body>
-</html>
+/***** NAVIGATION *****/
+function showSection(sec){ $('#home').classList.add('hidden'); $('#htmlSection').classList.add('hidden'); $('#jsSection').classList.add('hidden');
+  if(sec==='html' && canUse()) $('#htmlSection').classList.remove('hidden');
+  else if(sec==='js' && canUse()) $('#jsSection').classList.remove('hidden');
+  else $('#home').classList.remove
+  
